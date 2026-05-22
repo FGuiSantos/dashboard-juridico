@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="120">
+<title>Dashboard · Tarefas Jurídicas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0f1117;--panel:#181c27;--panel2:#1e2335;--border:#252a3a;--acc:#4f8ef7;--red:#f75f5f;--yellow:#f7c948;--green:#3ecf8e;--purple:#9b7fe8;--text:#e8eaf0;--muted:#7a7f96;--xs:.7rem;--sm:.78rem;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px}
+header{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+header h1{font-size:.95rem;font-weight:700}
+header p{font-size:.68rem;color:var(--muted);margin-top:2px}
+.live-badge{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.filters{display:flex;flex-wrap:wrap;gap:8px;padding:10px 24px;background:var(--panel)66;border-bottom:1px solid var(--border);align-items:center}
+.filters label{font-size:.65rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+select{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.73rem;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
+select:focus{border-color:var(--acc)}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:.73rem;font-weight:600;cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--acc);color:var(--acc)}
+.kpis{display:flex;gap:10px;padding:14px 24px;overflow-x:auto}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;min-width:110px;flex:1;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc,var(--acc))}
+.kpi .val{font-size:1.65rem;font-weight:700;font-family:'DM Mono',monospace;color:var(--kc,var(--text));line-height:1}
+.kpi .lbl{font-size:.65rem;color:var(--muted);margin-top:5px;text-transform:uppercase;letter-spacing:.3px}
+.kpi .sub{font-size:.66rem;color:var(--muted);margin-top:3px}
+.kpi.red{--kc:var(--red)}.kpi.yellow{--kc:var(--yellow)}.kpi.green{--kc:var(--green)}.kpi.purple{--kc:var(--purple)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 24px 14px}
+.grid.full{grid-template-columns:1fr}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:15px}
+.card h3{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:13px;display:flex;align-items:center;gap:6px}
+.badge{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:1px 7px;color:var(--acc);font-size:.65rem;font-family:'DM Mono',monospace}
+canvas{max-height:215px}
+.tscroll{max-height:360px;overflow-y:auto}
+.tscroll::-webkit-scrollbar{width:4px}
+.tscroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+table{width:100%;border-collapse:collapse;font-size:.7rem}
+th{background:var(--panel2);color:var(--muted);font-weight:600;padding:7px 10px;text-align:left;position:sticky;top:0;border-bottom:1px solid var(--border);font-size:.62rem;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+td{padding:5px 10px;border-bottom:1px solid #1a1f2e;vertical-align:middle}
+tr:hover td{background:#151c28}
+.pill{display:inline-flex;padding:2px 7px;border-radius:20px;font-size:.62rem;font-weight:700}
+.p-r{background:#f75f5f18;color:var(--red)}.p-y{background:#f7c94818;color:var(--yellow)}
+.p-g{background:#3ecf8e18;color:var(--green)}.p-b{background:#4f8ef718;color:var(--acc)}
+.p-o{background:#f7703a18;color:#f7703a}
+.sb{display:flex;height:5px;border-radius:3px;overflow:hidden;gap:1px;min-width:80px}
+.sb-f{background:var(--red)}.sb-d{background:var(--yellow)}.sb-1{background:var(--purple)}.sb-a{background:#f7703a}.sb-u{background:#1e2840}
+.tab-nav{display:flex;gap:4px;padding:14px 24px 0;border-bottom:1px solid var(--border)}
+.tab{padding:8px 16px;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tab-content{display:none;padding-top:14px}.tab-content.active{display:block}
+.update-bar{background:var(--green)18;border:1px solid var(--green)44;border-radius:6px;padding:8px 14px;margin:0 24px 14px;font-size:.72rem;color:var(--green);display:flex;align-items:center;gap:8px}
+footer{text-align:center;padding:16px;color:var(--muted);font-size:.63rem;border-top:1px solid var(--border);margin-top:10px}
+@media(max-width:640px){.grid,.grid.full{grid-template-columns:1fr}.kpi .val{font-size:1.3rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📋 Controladoria · Dashboard de Tarefas</h1>
+    <p>Análise de prazos e distribuição por colaborador</p>
+  </div>
+  <div class="live-badge">
+    <span class="live-dot"></span>
+    <span id="badge-dt">Atualizado: 22/05/2026 08:24</span>
+  </div>
+</header>
+
+<div class="update-bar">
+  ✅ Dados atualizados em 22/05/2026 08:24 · Esta página recarrega automaticamente a cada 2 minutos
+</div>
+
+<div class="filters">
+  <label>Equipe</label>
+  <select id="f-eq"><option value="">Todas</option><option>Administrativo</option>
+    <option>Cisne</option>
+    <option>Cível</option>
+    <option>Enel Estratégico</option>
+    <option>Enel Massivo</option>
+    <option>Estagiários</option>
+    <option>Paralegais</option>
+    <option>Trabalhista</option></select>
+  <label>Colaborador</label>
+  <select id="f-col"><option value="">Todos</option></select>
+  <label>Status</label>
+  <select id="f-st">
+    <option value="">Todos</option>
+    <option>No Fatal</option><option>No D-2</option>
+    <option>No D-1</option><option>Atrasados</option><option>Prazo Futuro</option>
+  </select>
+  <button class="btn" onclick="aplicar()">🔍 Filtrar</button>
+  <button class="btn btn-ghost" onclick="limpar()">✕ Limpar</button>
+</div>
+
+<div class="kpis">
+  <div class="kpi red"><div class="val" id="k-fatal">—</div><div class="lbl">No Fatal</div></div>
+  <div class="kpi yellow"><div class="val" id="k-d2">—</div><div class="lbl">No D-2</div></div>
+  <div class="kpi purple"><div class="val" id="k-d1">—</div><div class="lbl">No D-1</div></div>
+  <div class="kpi" style="--kc:#f7703a"><div class="val" id="k-atr">—</div><div class="lbl">Atrasados</div></div>
+  <div class="kpi green"><div class="val" id="k-fut">—</div><div class="lbl">Prazo Futuro</div></div>
+  <div class="kpi"><div class="val" id="k-tot">—</div><div class="lbl">Total</div></div>
+  <div class="kpi"><div class="val" id="k-col">—</div><div class="lbl">Colaboradores</div></div>
+</div>
+
+<div class="tab-nav">
+  <div class="tab active" onclick="showTab('geral',this)">📊 Visão Geral</div>
+  <div class="tab" onclick="showTab('equipes',this)">🏢 Por Equipe</div>
+  <div class="tab" onclick="showTab('colaboradores',this)">👤 Colaboradores</div>
+  <div class="tab" onclick="showTab('mensal',this)">📅 Mensal</div>
+</div>
+
+<!-- TAB: GERAL -->
+<div class="tab-content active" id="tab-geral">
+  <div class="grid" style="padding-top:14px">
+    <div class="card">
+      <h3>📊 Status Geral <span class="badge" id="b-geral"></span></h3>
+      <canvas id="ch-status"></canvas>
+    </div>
+    <div class="card">
+      <h3>🏢 Por Equipe</h3>
+      <canvas id="ch-eq"></canvas>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>✅ Critérios de Conformidade</h3>
+      <canvas id="ch-crit"></canvas>
+    </div>
+    <div class="card">
+      <h3>🏆 Top 10 Colaboradores</h3>
+      <canvas id="ch-top10"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: EQUIPES -->
+<div class="tab-content" id="tab-equipes">
+  <div class="grid full" style="padding-top:14px">
+    <div class="card">
+      <h3>📈 Equipe × Status (distribuição)</h3>
+      <canvas id="ch-eq-stack" style="max-height:280px"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: COLABORADORES -->
+<div class="tab-content" id="tab-colaboradores">
+  <div class="grid full" style="padding-top:14px">
+    <div class="card">
+      <h3>👤 Tabela de Colaboradores <span class="badge" id="b-col"></span></h3>
+      <div class="tscroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Colaborador</th><th>Equipe</th>
+              <th style="color:var(--red)">Fatal</th>
+              <th style="color:var(--yellow)">D-2</th>
+              <th style="color:var(--purple)">D-1</th>
+              <th style="color:#f7703a">Atr.</th>
+              <th>Futuro</th>
+              <th>Total</th>
+              <th>Distribuição</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-col"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: MENSAL -->
+<div class="tab-content" id="tab-mensal">
+  <div class="grid full" style="padding-top:14px">
+    <div class="card">
+      <h3>📅 Volume Fatal por Mês</h3>
+      <canvas id="ch-mes" style="max-height:280px"></canvas>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Dashboard de Tarefas Jurídicas · Atualizado em 22/05/2026 08:24 · Os dados refletem a última versão do arquivo Excel
+</footer>
+
+<script>
+const EQ_STATUS    = [{"Equipe": "Administrativo", "Atrasados": 12, "No D-1": 0, "No D-2": 8, "No Fatal": 0, "Prazo Futuro": 9}, {"Equipe": "Cisne", "Atrasados": 1, "No D-1": 0, "No D-2": 0, "No Fatal": 1, "Prazo Futuro": 1}, {"Equipe": "Cível", "Atrasados": 222, "No D-1": 79, "No D-2": 73, "No Fatal": 39, "Prazo Futuro": 390}, {"Equipe": "Enel Estratégico", "Atrasados": 3, "No D-1": 36, "No D-2": 14, "No Fatal": 13, "Prazo Futuro": 482}, {"Equipe": "Enel Massivo", "Atrasados": 2, "No D-1": 150, "No D-2": 102, "No Fatal": 54, "Prazo Futuro": 1576}, {"Equipe": "Estagiários", "Atrasados": 64, "No D-1": 45, "No D-2": 31, "No Fatal": 42, "Prazo Futuro": 812}, {"Equipe": "Paralegais", "Atrasados": 570, "No D-1": 152, "No D-2": 88, "No Fatal": 37, "Prazo Futuro": 2173}, {"Equipe": "Trabalhista", "Atrasados": 80, "No D-1": 88, "No D-2": 48, "No Fatal": 47, "Prazo Futuro": 399}];
+const COLAB_STATUS = [{"Nome Usual": "Jonathan Reis", "Equipe": "Paralegais", "Atrasados": 455, "No D-1": 112, "No D-2": 59, "No Fatal": 27, "Prazo Futuro": 1215, "Total": 1868}, {"Nome Usual": "Thamara Karraro", "Equipe": "Paralegais", "Atrasados": 0, "No D-1": 30, "No D-2": 23, "No Fatal": 6, "Prazo Futuro": 665, "Total": 724}, {"Nome Usual": "Rayara Silva", "Equipe": "Paralegais", "Atrasados": 114, "No D-1": 10, "No D-2": 6, "No Fatal": 4, "Prazo Futuro": 293, "Total": 427}, {"Nome Usual": "Pedro Igor", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 15, "No D-2": 6, "No Fatal": 5, "Prazo Futuro": 178, "Total": 204}, {"Nome Usual": "Josiane Almeida", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 8, "No D-2": 9, "No Fatal": 4, "Prazo Futuro": 178, "Total": 199}, {"Nome Usual": "Larissa Lopes", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 13, "No D-2": 14, "No Fatal": 13, "Prazo Futuro": 158, "Total": 198}, {"Nome Usual": "Nereu Rodrigues", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 12, "No D-2": 11, "No Fatal": 4, "Prazo Futuro": 159, "Total": 186}, {"Nome Usual": "Talisson Oliveira", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 8, "No D-2": 14, "No Fatal": 2, "Prazo Futuro": 154, "Total": 178}, {"Nome Usual": "Louize Garcia", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 13, "No D-2": 10, "No Fatal": 14, "Prazo Futuro": 136, "Total": 173}, {"Nome Usual": "Larissy Fortaleza", "Equipe": "Enel Massivo", "Atrasados": 2, "No D-1": 27, "No D-2": 12, "No Fatal": 2, "Prazo Futuro": 130, "Total": 173}, {"Nome Usual": "Gustavo Falcão", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 20, "No D-2": 7, "No Fatal": 4, "Prazo Futuro": 135, "Total": 166}, {"Nome Usual": "Kamille Cunto", "Equipe": "Enel Estratégico", "Atrasados": 2, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 162, "Total": 164}, {"Nome Usual": "Carolina Soares", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 16, "No D-2": 8, "No Fatal": 3, "Prazo Futuro": 133, "Total": 160}, {"Nome Usual": "Clara Fontinele", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 3, "No D-2": 2, "No Fatal": 3, "Prazo Futuro": 121, "Total": 129}, {"Nome Usual": "Gian Lucca", "Equipe": "Estagiários", "Atrasados": 4, "No D-1": 11, "No D-2": 2, "No Fatal": 10, "Prazo Futuro": 95, "Total": 122}, {"Nome Usual": "Natalia Souza", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 12, "No D-2": 4, "No Fatal": 2, "Prazo Futuro": 96, "Total": 114}, {"Nome Usual": "John Mateus", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 4, "No D-2": 2, "No Fatal": 2, "Prazo Futuro": 105, "Total": 113}, {"Nome Usual": "Joao Victor", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 2, "No D-2": 2, "No Fatal": 1, "Prazo Futuro": 107, "Total": 112}, {"Nome Usual": "Yuri Albuquerque", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 5, "No D-2": 6, "No Fatal": 1, "Prazo Futuro": 99, "Total": 111}, {"Nome Usual": "Joyce Mara", "Equipe": "Cível", "Atrasados": 41, "No D-1": 8, "No D-2": 25, "No Fatal": 3, "Prazo Futuro": 32, "Total": 109}, {"Nome Usual": "Pietro Ribeiro", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 1, "No D-2": 4, "No Fatal": 5, "Prazo Futuro": 99, "Total": 109}, {"Nome Usual": "Rebeca Ribeiro", "Equipe": "Enel Estratégico", "Atrasados": 0, "No D-1": 7, "No D-2": 1, "No Fatal": 2, "Prazo Futuro": 93, "Total": 103}, {"Nome Usual": "Bhrenda Christina", "Equipe": "Trabalhista", "Atrasados": 17, "No D-1": 7, "No D-2": 5, "No Fatal": 9, "Prazo Futuro": 58, "Total": 96}, {"Nome Usual": "Danielle Santos", "Equipe": "Cível", "Atrasados": 40, "No D-1": 10, "No D-2": 3, "No Fatal": 2, "Prazo Futuro": 41, "Total": 96}, {"Nome Usual": "Jose Donato", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 8, "No D-2": 17, "No Fatal": 14, "Prazo Futuro": 54, "Total": 93}, {"Nome Usual": "João Lourenço", "Equipe": "Estagiários", "Atrasados": 21, "No D-1": 8, "No D-2": 9, "No Fatal": 6, "Prazo Futuro": 46, "Total": 90}, {"Nome Usual": "Luiza Nobrega", "Equipe": "Estagiários", "Atrasados": 19, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 71, "Total": 90}, {"Nome Usual": "Laianna Paz", "Equipe": "Enel Estratégico", "Atrasados": 0, "No D-1": 9, "No D-2": 5, "No Fatal": 3, "Prazo Futuro": 61, "Total": 78}, {"Nome Usual": "Valeska Tayane", "Equipe": "Enel Estratégico", "Atrasados": 0, "No D-1": 10, "No D-2": 4, "No Fatal": 5, "Prazo Futuro": 56, "Total": 75}, {"Nome Usual": "Rafael Carneiro", "Equipe": "Cível", "Atrasados": 67, "No D-1": 3, "No D-2": 1, "No Fatal": 0, "Prazo Futuro": 4, "Total": 75}, {"Nome Usual": "Paulo Parente", "Equipe": "Cível", "Atrasados": 52, "No D-1": 6, "No D-2": 2, "No Fatal": 0, "Prazo Futuro": 13, "Total": 73}, {"Nome Usual": "Ellen Holanda", "Equipe": "Trabalhista", "Atrasados": 17, "No D-1": 24, "No D-2": 1, "No Fatal": 3, "Prazo Futuro": 26, "Total": 71}, {"Nome Usual": "Aylla Araujo", "Equipe": "Trabalhista", "Atrasados": 14, "No D-1": 21, "No D-2": 5, "No Fatal": 10, "Prazo Futuro": 21, "Total": 71}, {"Nome Usual": "Aloisio Carvalho", "Equipe": "Enel Estratégico", "Atrasados": 0, "No D-1": 3, "No D-2": 4, "No Fatal": 0, "Prazo Futuro": 62, "Total": 69}, {"Nome Usual": "Elvis Barreto", "Equipe": "Cível", "Atrasados": 5, "No D-1": 3, "No D-2": 4, "No Fatal": 3, "Prazo Futuro": 52, "Total": 67}, {"Nome Usual": "Jorge Evaristo", "Equipe": "Cível", "Atrasados": 0, "No D-1": 2, "No D-2": 5, "No Fatal": 1, "Prazo Futuro": 52, "Total": 60}, {"Nome Usual": "Hevelyn Bessa", "Equipe": "Trabalhista", "Atrasados": 8, "No D-1": 4, "No D-2": 2, "No Fatal": 3, "Prazo Futuro": 37, "Total": 54}, {"Nome Usual": "Hedelyn Melo", "Equipe": "Cível", "Atrasados": 0, "No D-1": 11, "No D-2": 7, "No Fatal": 11, "Prazo Futuro": 21, "Total": 50}, {"Nome Usual": "Laiza Rego", "Equipe": "Estagiários", "Atrasados": 3, "No D-1": 0, "No D-2": 4, "No Fatal": 0, "Prazo Futuro": 42, "Total": 49}, {"Nome Usual": "Paulo Victor", "Equipe": "Cível", "Atrasados": 0, "No D-1": 4, "No D-2": 10, "No Fatal": 4, "Prazo Futuro": 30, "Total": 48}, {"Nome Usual": "Joselito Saraiva", "Equipe": "Trabalhista", "Atrasados": 12, "No D-1": 6, "No D-2": 5, "No Fatal": 2, "Prazo Futuro": 22, "Total": 47}, {"Nome Usual": "Karenina Sindeaux", "Equipe": "Trabalhista", "Atrasados": 3, "No D-1": 1, "No D-2": 4, "No Fatal": 1, "Prazo Futuro": 36, "Total": 45}, {"Nome Usual": "Raquel Torres", "Equipe": "Cível", "Atrasados": 9, "No D-1": 4, "No D-2": 7, "No Fatal": 4, "Prazo Futuro": 21, "Total": 45}, {"Nome Usual": "Rebeca Vaz", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 5, "No D-2": 4, "No Fatal": 1, "Prazo Futuro": 32, "Total": 42}, {"Nome Usual": "Gabriel Beserra", "Equipe": "Cível", "Atrasados": 6, "No D-1": 9, "No D-2": 3, "No Fatal": 2, "Prazo Futuro": 21, "Total": 41}, {"Nome Usual": "Sarah Accioly", "Equipe": "Cível", "Atrasados": 0, "No D-1": 2, "No D-2": 1, "No Fatal": 2, "Prazo Futuro": 36, "Total": 41}, {"Nome Usual": "Joana Cysneiros", "Equipe": "Enel Estratégico", "Atrasados": 0, "No D-1": 1, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 39, "Total": 40}, {"Nome Usual": "Thiago Mesquita", "Equipe": "Cível", "Atrasados": 2, "No D-1": 6, "No D-2": 0, "No Fatal": 3, "Prazo Futuro": 28, "Total": 39}, {"Nome Usual": "Felipe Aguiar", "Equipe": "Estagiários", "Atrasados": 8, "No D-1": 4, "No D-2": 3, "No Fatal": 7, "Prazo Futuro": 14, "Total": 36}, {"Nome Usual": "Karen Monte", "Equipe": "Trabalhista", "Atrasados": 1, "No D-1": 5, "No D-2": 3, "No Fatal": 1, "Prazo Futuro": 23, "Total": 33}, {"Nome Usual": "Sarah Vilar", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 3, "No D-2": 2, "No Fatal": 0, "Prazo Futuro": 26, "Total": 31}, {"Nome Usual": "Lis Herbster", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 2, "Prazo Futuro": 28, "Total": 30}, {"Nome Usual": "Livia Mota", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 2, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 26, "Total": 28}, {"Nome Usual": "Joao Paulo Abreu", "Equipe": "Estagiários", "Atrasados": 3, "No D-1": 1, "No D-2": 0, "No Fatal": 1, "Prazo Futuro": 22, "Total": 27}, {"Nome Usual": "Pedro Henrique", "Equipe": "Estagiários", "Atrasados": 1, "No D-1": 3, "No D-2": 1, "No Fatal": 1, "Prazo Futuro": 20, "Total": 26}, {"Nome Usual": "Sylvia Vilar", "Equipe": "Trabalhista", "Atrasados": 7, "No D-1": 3, "No D-2": 1, "No Fatal": 0, "Prazo Futuro": 12, "Total": 23}, {"Nome Usual": "Samara Mesquita", "Equipe": "Trabalhista", "Atrasados": 1, "No D-1": 1, "No D-2": 1, "No Fatal": 2, "Prazo Futuro": 17, "Total": 22}, {"Nome Usual": "Ryan Alves", "Equipe": "Cível", "Atrasados": 0, "No D-1": 5, "No D-2": 0, "No Fatal": 1, "Prazo Futuro": 16, "Total": 22}, {"Nome Usual": "Tallita Almeida", "Equipe": "Enel Massivo", "Atrasados": 0, "No D-1": 1, "No D-2": 1, "No Fatal": 0, "Prazo Futuro": 20, "Total": 22}, {"Nome Usual": "Diogo Luna", "Equipe": "Enel Estratégico", "Atrasados": 1, "No D-1": 6, "No D-2": 0, "No Fatal": 3, "Prazo Futuro": 9, "Total": 19}, {"Nome Usual": "Keise Silva", "Equipe": "Administrativo", "Atrasados": 0, "No D-1": 0, "No D-2": 8, "No Fatal": 0, "Prazo Futuro": 9, "Total": 17}, {"Nome Usual": "Marina Monteiro", "Equipe": "Estagiários", "Atrasados": 5, "No D-1": 0, "No D-2": 0, "No Fatal": 4, "Prazo Futuro": 7, "Total": 16}, {"Nome Usual": "Tatiana Façanha", "Equipe": "Cível", "Atrasados": 0, "No D-1": 3, "No D-2": 1, "No Fatal": 2, "Prazo Futuro": 9, "Total": 15}, {"Nome Usual": "Sarah Guimarães", "Equipe": "Cível", "Atrasados": 0, "No D-1": 3, "No D-2": 2, "No Fatal": 1, "Prazo Futuro": 8, "Total": 14}, {"Nome Usual": "Aryane Rachel", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 1, "No D-2": 0, "No Fatal": 1, "Prazo Futuro": 10, "Total": 12}, {"Nome Usual": "Avila Salgado", "Equipe": "Administrativo", "Atrasados": 12, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 0, "Total": 12}, {"Nome Usual": "Renata Lucateli", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 11, "Total": 11}, {"Nome Usual": "Thais Fernandes", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 9, "Total": 9}, {"Nome Usual": "Lucas Monteiro", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 6, "Total": 6}, {"Nome Usual": "Rafael Arruda", "Equipe": "Cível", "Atrasados": 0, "No D-1": 0, "No D-2": 1, "No Fatal": 0, "Prazo Futuro": 5, "Total": 6}, {"Nome Usual": "Pedro Simeao", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 4, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 1, "Total": 5}, {"Nome Usual": "Marcelo Martins", "Equipe": "Estagiários", "Atrasados": 0, "No D-1": 1, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 2, "Total": 3}, {"Nome Usual": "Arnoldo Campelo", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 3, "Total": 3}, {"Nome Usual": "Amalia Moura", "Equipe": "Cível", "Atrasados": 0, "No D-1": 0, "No D-2": 1, "No Fatal": 0, "Prazo Futuro": 1, "Total": 2}, {"Nome Usual": "Camila Fontenele", "Equipe": "Trabalhista", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 2, "Total": 2}, {"Nome Usual": "Bruno Barbosa", "Equipe": "Cisne", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 1, "Total": 1}, {"Nome Usual": "Pedro Vinicius", "Equipe": "Paralegais", "Atrasados": 1, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 0, "Total": 1}, {"Nome Usual": "Thais Martins", "Equipe": "Cisne", "Atrasados": 0, "No D-1": 0, "No D-2": 0, "No Fatal": 1, "Prazo Futuro": 0, "Total": 1}, {"Nome Usual": "Ulysses Filho", "Equipe": "Cisne", "Atrasados": 1, "No D-1": 0, "No D-2": 0, "No Fatal": 0, "Prazo Futuro": 0, "Total": 1}];
+const MESES        = [{"mes_num": 1, "Mês do Fatal": "jan", "qtd": 566}, {"mes_num": 2, "Mês do Fatal": "fev", "qtd": 10}, {"mes_num": 3, "Mês do Fatal": "mar", "qtd": 41}, {"mes_num": 4, "Mês do Fatal": "abr", "qtd": 222}, {"mes_num": 5, "Mês do Fatal": "mai", "qtd": 2665}, {"mes_num": 6, "Mês do Fatal": "jun", "qtd": 2388}, {"mes_num": 7, "Mês do Fatal": "jul", "qtd": 663}, {"mes_num": 8, "Mês do Fatal": "ago", "qtd": 223}, {"mes_num": 9, "Mês do Fatal": "set", "qtd": 135}, {"mes_num": 10, "Mês do Fatal": "out", "qtd": 65}, {"mes_num": 11, "Mês do Fatal": "nov", "qtd": 59}, {"mes_num": 12, "Mês do Fatal": "dez", "qtd": 76}];
+const EQ_COLOR = {'Cível':'#4f8ef7','Trabalhista':'#9b7fe8','Enel Estratégico':'#3ecf8e','Enel Massivo':'#f7c948','Estagiários':'#f7703a','Paralegais':'#f75f5f','Administrativo':'#7a7f96','Cisne':'#aaa'};
+
+let filtColab=[...COLAB_STATUS];
+const charts={};
+
+// Populate collab dropdown
+const selCol=document.getElementById('f-col');
+COLAB_STATUS.forEach(r=>{const o=document.createElement('option');o.value=r['Nome Usual'];o.textContent=r['Nome Usual'].split(' ').slice(0,2).join(' ');selCol.appendChild(o);});
+
+document.getElementById('f-eq').addEventListener('change',function(){
+  const eq=this.value;
+  selCol.querySelectorAll('option').forEach(o=>{
+    if(!o.value)return;
+    const row=COLAB_STATUS.find(r=>r['Nome Usual']===o.value);
+    o.style.display=(!eq||row?.Equipe===eq)?'':'none';
+  });
+  selCol.value='';
+});
+
+function aplicar(){
+  const eq=document.getElementById('f-eq').value;
+  const col=document.getElementById('f-col').value;
+  const st=document.getElementById('f-st').value;
+  filtColab=COLAB_STATUS.filter(r=>{
+    if(eq&&r.Equipe!==eq)return false;
+    if(col&&r['Nome Usual']!==col)return false;
+    if(st&&!r[st])return false;
+    return true;
+  });
+  renderAll();
+}
+function limpar(){
+  ['f-eq','f-col','f-st'].forEach(id=>document.getElementById(id).value='');
+  filtColab=[...COLAB_STATUS];renderAll();
+}
+
+function showTab(id,el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  renderTab(id);
+}
+
+const DC={responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#7a7f96',font:{family:'DM Sans',size:11},boxWidth:10,padding:10}}},scales:{x:{ticks:{color:'#7a7f96',font:{size:10}},grid:{color:'#1a1f2e'}},y:{ticks:{color:'#7a7f96',font:{size:10}},grid:{color:'#1a1f2e'}}}};
+function mk(id,cfg){const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();charts[id]=new Chart(el,cfg);}
+
+function renderKPIs(){
+  const fatal=filtColab.reduce((s,r)=>s+(r['No Fatal']||0),0);
+  const d2=filtColab.reduce((s,r)=>s+(r['No D-2']||0),0);
+  const d1=filtColab.reduce((s,r)=>s+(r['No D-1']||0),0);
+  const atr=filtColab.reduce((s,r)=>s+(r['Atrasados']||0),0);
+  const fut=filtColab.reduce((s,r)=>s+(r['Prazo Futuro']||0),0);
+  const tot=filtColab.reduce((s,r)=>s+(r['Total']||0),0);
+  document.getElementById('k-fatal').textContent=fatal.toLocaleString('pt-BR');
+  document.getElementById('k-d2').textContent=d2.toLocaleString('pt-BR');
+  document.getElementById('k-d1').textContent=d1.toLocaleString('pt-BR');
+  document.getElementById('k-atr').textContent=atr.toLocaleString('pt-BR');
+  document.getElementById('k-fut').textContent=fut.toLocaleString('pt-BR');
+  document.getElementById('k-tot').textContent=tot.toLocaleString('pt-BR');
+  document.getElementById('k-col').textContent=filtColab.length;
+  document.getElementById('b-geral').textContent=tot.toLocaleString('pt-BR')+' tarefas';
+  document.getElementById('b-col').textContent=filtColab.length+' colaboradores';
+}
+
+function renderGeral(){
+  const fatal=filtColab.reduce((s,r)=>s+(r['No Fatal']||0),0);
+  const d2=filtColab.reduce((s,r)=>s+(r['No D-2']||0),0);
+  const d1=filtColab.reduce((s,r)=>s+(r['No D-1']||0),0);
+  const atr=filtColab.reduce((s,r)=>s+(r['Atrasados']||0),0);
+  const fut=filtColab.reduce((s,r)=>s+(r['Prazo Futuro']||0),0);
+  mk('ch-status',{type:'doughnut',data:{labels:['No Fatal','No D-2','No D-1','Atrasados','Prazo Futuro'],datasets:[{data:[fatal,d2,d1,atr,fut],backgroundColor:['#f75f5f','#f7c948','#9b7fe8','#f7703a','#1e2840'],borderColor:'#0f1117',borderWidth:3}]},options:{...DC,cutout:'65%',plugins:{legend:{position:'right',labels:{color:'#7a7f96',font:{size:11},boxWidth:10}}},scales:{x:{display:false},y:{display:false}}}});
+  const eqs=EQ_STATUS.filter(r=>filtColab.some(c=>c.Equipe===r.Equipe));
+  const eqT=eqs.map(r=>['No Fatal','No D-2','No D-1','Atrasados','Prazo Futuro'].reduce((s,k)=>s+(r[k]||0),0));
+  mk('ch-eq',{type:'bar',data:{labels:eqs.map(r=>r.Equipe),datasets:[{label:'Total',data:eqT,backgroundColor:eqs.map(r=>EQ_COLOR[r.Equipe]||'#4f8ef7'),borderRadius:5,borderSkipped:false}]},options:{...DC,indexAxis:'y',plugins:{legend:{display:false}}}});
+  const top10=[...filtColab].sort((a,b)=>b.Total-a.Total).slice(0,10);
+  mk('ch-top10',{type:'bar',data:{labels:top10.map(r=>r['Nome Usual'].split(' ').slice(0,2).join(' ')),datasets:[{label:'Total',data:top10.map(r=>r.Total),backgroundColor:top10.map(r=>EQ_COLOR[r.Equipe]||'#4f8ef7'),borderRadius:4,borderSkipped:false}]},options:{...DC,indexAxis:'y',plugins:{legend:{display:false}}}});
+}
+
+function renderEquipes(){
+  const eqs=EQ_STATUS.filter(r=>filtColab.some(c=>c.Equipe===r.Equipe));
+  mk('ch-eq-stack',{type:'bar',data:{labels:eqs.map(r=>r.Equipe),datasets:[
+    {label:'No Fatal',data:eqs.map(r=>r['No Fatal']||0),backgroundColor:'#f75f5f',borderRadius:3},
+    {label:'No D-2',data:eqs.map(r=>r['No D-2']||0),backgroundColor:'#f7c948',borderRadius:3},
+    {label:'No D-1',data:eqs.map(r=>r['No D-1']||0),backgroundColor:'#9b7fe8',borderRadius:3},
+    {label:'Atrasados',data:eqs.map(r=>r['Atrasados']||0),backgroundColor:'#f7703a',borderRadius:3},
+    {label:'Futuro',data:eqs.map(r=>r['Prazo Futuro']||0),backgroundColor:'#1e2840',borderRadius:3},
+  ]},options:{...DC,scales:{x:{...DC.scales.x,stacked:true},y:{...DC.scales.y,stacked:true}}}});
+}
+
+function renderColaboradores(){
+  const sorted=[...filtColab].sort((a,b)=>b.Total-a.Total);
+  const cor=r=>EQ_COLOR[r.Equipe]||'#4f8ef7';
+  document.getElementById('tbody-col').innerHTML=sorted.map((r,i)=>{
+    const al=r['No Fatal']>0?'p-r':r['Atrasados']>10?'p-o':r['No D-2']>5?'p-y':'';
+    return `<tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace">${i+1}</td>
+      <td style="font-weight:500">${al?`<span class="pill ${al}" style="margin-right:4px">⚠</span>`:''}${r['Nome Usual']}</td>
+      <td><span class="pill p-b" style="background:${cor(r)}22;color:${cor(r)}">${r.Equipe}</span></td>
+      <td style="color:var(--red);font-weight:${r['No Fatal']>0?700:400}">${r['No Fatal']||'—'}</td>
+      <td style="color:var(--yellow)">${r['No D-2']||'—'}</td>
+      <td style="color:var(--purple)">${r['No D-1']||'—'}</td>
+      <td style="color:#f7703a">${r['Atrasados']||'—'}</td>
+      <td style="color:#4a5a8a">${r['Prazo Futuro']||'—'}</td>
+      <td style="font-weight:700;font-family:'DM Mono',monospace">${r.Total}</td>
+      <td><div class="sb">
+        <div class="sb-f" style="flex:${r['No Fatal']}"></div>
+        <div class="sb-d" style="flex:${r['No D-2']}"></div>
+        <div class="sb-1" style="flex:${r['No D-1']}"></div>
+        <div class="sb-a" style="flex:${r['Atrasados']}"></div>
+        <div class="sb-u" style="flex:${r['Prazo Futuro']}"></div>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderMensal(){
+  mk('ch-mes',{type:'bar',data:{labels:MESES.map(r=>r['Mês do Fatal']),datasets:[{label:'Tarefas',data:MESES.map(r=>r.qtd),backgroundColor:MESES.map(r=>r.mes_num<=4?'#f75f5f':r.mes_num<=6?'#f7c948':'#4f8ef7'),borderRadius:5,borderSkipped:false}]},options:{...DC,plugins:{legend:{display:false}}}});
+}
+
+function renderTab(id){
+  if(id==='geral')renderGeral();
+  else if(id==='equipes')renderEquipes();
+  else if(id==='colaboradores')renderColaboradores();
+  else if(id==='mensal')renderMensal();
+}
+
+function renderAll(){
+  renderKPIs();
+  const active=document.querySelector('.tab-content.active')?.id?.replace('tab-','');
+  if(active)renderTab(active);
+}
+
+Chart.defaults.color='#7a7f96';
+Chart.defaults.font.family="'DM Sans',sans-serif";
+renderAll();
+</script>
+</body>
+</html>
